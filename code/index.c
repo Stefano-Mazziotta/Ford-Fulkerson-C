@@ -3,7 +3,6 @@
 #include <string.h>
 //#include "tail.h"
 
-
 // --- Macros ---
 
 // Número de vértices en el gráfico dado
@@ -27,7 +26,7 @@ int red[V][V] = {
     Devuelve true si hay un camino desde la fuente de ’s’ bajando a ’t’ en red auxiliar.
     También se llena de los semicamino [] para almacenar el camino 
 */
-int busqueda_camino(int red_aux[V][V], int s, int t, int semicamino[]) {
+int busqueda_camino(int red_aux[V][V], int fuente, int sumidero, int semicamino[]) {
 
     // Crear vector visitado y marcar todos los vértices como no visitados
     int visitado[V];
@@ -43,9 +42,9 @@ int busqueda_camino(int red_aux[V][V], int s, int t, int semicamino[]) {
     int fin = 0;
 
     // Empezamos en el nodo fuente
-    cola[fin++] = s;
-    visitado[s] = true;
-    semicamino[s] = -1;
+    cola[fin++] = fuente;
+    visitado[fuente] = true;
+    semicamino[fuente] = -1;
 
     while (frente != fin) {
         int u = cola[frente++];
@@ -60,11 +59,11 @@ int busqueda_camino(int red_aux[V][V], int s, int t, int semicamino[]) {
     }
 
     // Si llegamos al nodo sumidero en el BFS, hay un camino
-    return (visitado[t] == true);
+    return (visitado[sumidero] == true);
 }
 
 // Retorna el maximo flujo de s a t en el grafico dado
-int fordFulkerson(int red[V][V], int s, int t){
+int fordFulkerson(int red[V][V], int fuente, int sumidero){
    
     int red_aux[V][V];
     for (int i = 0; i < V; i++) {
@@ -76,17 +75,17 @@ int fordFulkerson(int red[V][V], int s, int t){
     int flujo_maximo = 0;
     int semicamino[V];
 
-    while (busqueda_camino(red_aux, s, t, semicamino)) {
+    while (busqueda_camino(red_aux, fuente, sumidero, semicamino)) {
         int flujo_camino = INT_MAX;
 
         // Encuentra la capacidad mínima en el camino de aumento
-        for (int v = t; v != s; v = semicamino[v]) {
+        for (int v = sumidero; v != fuente; v = semicamino[v]) {
             int u = semicamino[v];
             flujo_camino = lower(flujo_camino, red_aux[u][v]);
         }
 
         // Actualiza las capacidades en el grafo residual
-        for (int v = t; v != s; v = semicamino[v]) {
+        for (int v = sumidero; v != fuente; v = semicamino[v]) {
             int u = semicamino[v];
             red_aux[u][v] -= flujo_camino;
             red_aux[v][u] += flujo_camino; // Añadir flujo en sentido opuesto
