@@ -12,7 +12,7 @@ The Ford-Fulkerson algorithm is a method for finding the maximum flow in a netwo
 
    - Compile the code using a C compiler (e.g., GCC).
      ```bash
-     gcc ford_fulkerson.c -o ford_fulkerson
+     gcc /code/index.c -o ford_fulkerson
      ```
 
 2. **Execution:**
