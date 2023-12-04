@@ -1,42 +1,31 @@
 #include <stdio.h>
 #include <limits.h>
 #include <string.h>
-//#include "tail.h"
+#include "index.h"
 
-// --- Macros ---
+/*
+    Función: busqueda_camino
 
-// Número de vértices en el gráfico dado
-#define V 6
-#define true 1
-#define false 0
-#define lower(X, Y) ( (X < Y) ? X : Y )
+    Descripción:
+    - Realiza una búsqueda en amplitud (BFS) para encontrar un camino desde la fuente al sumidero en una red auxiliar.
 
-// Definimos la red como matríz de adyacencia.
-int red[V][V] = {
-  {0, 4, 6, 0, 0, 0},
-  {0, 0, 0, 3, 5, 0},
-  {0, 0, 0, 0, 6, 0},
-  {0, 0, 9, 0, 0, 5},
-  {0, 0, 0, 0, 0, 4},
-  {0, 0, 0, 0, 0, 0}
-};
+    Parámetros:
+    - red_aux: Matriz de adyacencia de la red residual.
+    - fuente: Nodo fuente del camino.
+    - sumidero: Nodo sumidero del camino.
+    - semicamino: Array para almacenar el camino.
 
-
-/* 
-    Devuelve true si hay un camino desde la fuente de ’s’ bajando a ’t’ en red auxiliar.
-    También se llena de los semicamino [] para almacenar el camino 
+    Retorno:
+    - 1 si hay un camino desde la fuente al sumidero, 0 en caso contrario.
 */
 int busqueda_camino(int red_aux[V][V], int fuente, int sumidero, int semicamino[]) {
 
-    // Crear vector visitado y marcar todos los vértices como no visitados
     int visitado[V];
     memset(visitado, 0, sizeof(visitado));
 
     // Creación de una cola, vértice fuente en cola y marcar vértices fuente como visitado
     // Se recorre red_aux para encontrar las adyacencias y los semicaminos
-    // Consejo: Buscar , investigar sobre algoritmo de recorrido de grafos BSF
 
-    // Usaremos una cola para BFS
     int cola[V];
     int frente = 0;
     int fin = 0;
@@ -62,7 +51,20 @@ int busqueda_camino(int red_aux[V][V], int fuente, int sumidero, int semicamino[
     return (visitado[sumidero] == true);
 }
 
-// Retorna el maximo flujo de s a t en el grafico dado
+/*
+    Función: fordFulkerson
+
+    Descripción:
+    - Implementa el algoritmo de Ford-Fulkerson para encontrar el flujo máximo en una red de flujo.
+
+    Parámetros:
+    - red: Matriz de adyacencia que representa la red original.
+    - fuente: Nodo fuente de la red.
+    - sumidero: Nodo sumidero de la red.
+
+    Retorno:
+    - Flujo máximo desde la fuente hasta el sumidero en la red dada.
+*/
 int fordFulkerson(int red[V][V], int fuente, int sumidero){
    
     int red_aux[V][V];
@@ -100,35 +102,18 @@ int fordFulkerson(int red[V][V], int fuente, int sumidero){
 int main(void){
     int fuente = 0;
     int sumidero = 5;
+
+    // Verificar si hay flujos negativos antes de ejecutar el algoritmo
+    for (int i = 0; i < V; i++) {
+        for (int j = 0; j < V; j++) {
+            if (red[i][j] < 0) {
+                printf("Error: La red contiene flujos negativos. El algoritmo de Ford-Fulkerson no maneja flujos negativos.\n");
+                return 1;
+            }
+        }
+    }
+
     printf("El flujo máximo posible es: %d\n", fordFulkerson(red, fuente, sumidero));
+
     return 0;
 }
-
-/*
-
-    // mis notaciones
-    grafos con pesos podría representarse con una matriz de adyacencia y una de capacidades.
-
-    // resumen pdf
-    Este segundo método lo podemos generalizar de la siguiente manera: Suponer
-    que hay un camino de S a algún nodo Y, un camino de algún nodo X a T y un
-    camino de X a Y con flujo positivo. Entonces, el flujo a lo largo del camino de
-    X a Y puede ser reducido y esta cantidad es el mínimo del flujo de X a Y y las
-    diferencias entre capacidades y flujo en los caminos de S a Y y X a T
-
-    // pseudocodigo 
-
-    // Matriz de adyacencia con los pesos o capacidades
-     int Grafo[V][V]
-
-    // inicia siendo igual que Grafo , pero se iran modificando los pesos segun el flujo
-    int Grafo_aux[V][V]
-
-    // Se armaran los semicaminos de s a T usando a los nodos como indices
-    // en el pseudocodigo lo llamamos p
-    int semicamino[V]
-
-    // Marcaremos con 0/1 si se visito al vertice para no volver a hacerlo
-    int visitado[V];
-
-*/
