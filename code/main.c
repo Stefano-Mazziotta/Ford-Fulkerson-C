@@ -1,4 +1,4 @@
-#include "index.h"
+#include "main.h"
 
 void inicializarRedFlujoDesdeMatriz(struct RedFlujo* redFlujo, const int matriz[V][V]) {
     for (int i = 0; i < V; i++) {
