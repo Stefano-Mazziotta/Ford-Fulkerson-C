@@ -1,3 +1,7 @@
+#include <stdio.h>
+#include <limits.h>
+#include <string.h>
+
 #define V 6 // Número de vértices en el gráfico dado
 #define true 1
 #define false 0
