@@ -1,43 +1,63 @@
 #include "main.h"
 
 /**
- * Inicializa una red de flujo desde una matriz de capacidades.
- * @param redFlujo Puntero a la estructura RedFlujo que se inicializará.
+ * Inicializa una red desde una matriz de adyacencia representando las capacidades.
+ * @param red Puntero a la estructura Red que se inicializará.
  * @param matriz Matriz de capacidades para inicializar la red.
-*/
-void inicializarRedFlujoDesdeMatriz(struct RedFlujo* redFlujo, const int matriz[V][V]) {
-    redFlujo->capacidad = (int **)malloc(V * sizeof(int *));
+ * @note Esta función asigna dinámicamente memoria para almacenar la matriz de capacidades.
+ * @warning Se debe llamar a la función freeRedFlujo para evitar fugas de memoria.
+ */
+void inicializarRed(Red *red, const int matriz[V][V]) {
+    red->capacidades = (int **)malloc(V * sizeof(int *));
+
+    if (red->capacidades == NULL) {
+        // Devuelve un código de error o maneja el error según sea necesario
+        return;
+    }
+
     for (int i = 0; i < V; i++) {
-        redFlujo->capacidad[i] = (int *)malloc(V * sizeof(int));
+        red->capacidades[i] = (int *)malloc(V * sizeof(int));
+
+        if (red->capacidades[i] == NULL) {
+            // Manejar el error y liberar memoria asignada previamente
+            for (int j = i - 1; j >= 0; j--) {
+                free(red->capacidades[j]);
+            }
+            free(red->capacidades);
+            red->capacidades = NULL;
+            return;
+        }
+
         for (int j = 0; j < V; j++) {
-            redFlujo->capacidad[i][j] = matriz[i][j];
+            red->capacidades[i][j] = matriz[i][j];
         }
     }
 }
 
 /**
  * Realiza una búsqueda en amplitud en la red residual para encontrar un camino de aumento.
- * @param red Puntero a la estructura RedFlujo que representa la red residual.
+ * @param red puntero a la estructura red el cual representa la red residual (matriz de adyacencia).
  * @param fuente Nodo de inicio para la búsqueda.
  * @param sumidero Nodo de destino para la búsqueda.
  * @param bfs Estructura para almacenar los resultados de la búsqueda en amplitud.
  * @return true si se encuentra un camino de aumento, false en caso contrario.
+ * @note Esta función asigna dinámicamente memoria para los arrays de visitados y caminos.
  */
-bool busquedaAmplitud(const struct RedFlujo* red, int fuente, int sumidero, struct BusquedaAmplitud* bfs) {
+bool bfsAlgorithm(const Red *red, BreadthFirstSearch *bfs, int fuente, int sumidero) {
     
     // Inicializa los arrays de visitados y caminos
-    bfs->visitado = (int *)malloc(V * sizeof(int));
+    bfs->visitados = (int *)malloc(V * sizeof(int));
     bfs->camino = (int *)malloc(V * sizeof(int));
 
     // Verifica si la asignación de memoria fue exitosa
-    if (bfs->visitado == NULL || bfs->camino == NULL) {
+    if (bfs->visitados == NULL || bfs->camino == NULL) {
         // Manejar el error y retornar false, por ejemplo, liberando la memoria si es necesario
-        free(bfs->visitado);
+        free(bfs->visitados);
         free(bfs->camino);
         return false;
     }
 
-    memset(bfs->visitado, 0, V * sizeof(int));
+    memset(bfs->visitados, 0, V * sizeof(int));
     memset(bfs->camino, -1, V * sizeof(int));
 
     // Inicializa la cola para la búsqueda en amplitud
@@ -46,7 +66,7 @@ bool busquedaAmplitud(const struct RedFlujo* red, int fuente, int sumidero, stru
 
     // Agrega el nodo fuente a la cola y marca como visitado
     cola[fin] = fuente;
-    bfs->visitado[fuente] = true;
+    bfs->visitados[fuente] = true;
     fin++;
     
     // Búsqueda en amplitud
@@ -55,47 +75,46 @@ bool busquedaAmplitud(const struct RedFlujo* red, int fuente, int sumidero, stru
 
         // Explora los vecinos del nodo actual
         for (int vecino = 0; vecino < V; vecino++) {
-            if (!bfs->visitado[vecino] && red->capacidad[nodoActual][vecino] > 0) {
+            if (!bfs->visitados[vecino] && red->capacidades[nodoActual][vecino] > 0) {
                 cola[fin] = vecino;
                 fin++;
                 bfs->camino[vecino] = nodoActual;
-                bfs->visitado[vecino] = true;
+                bfs->visitados[vecino] = true;
             }
         }
     }
 
     // Devuelve true si se alcanzó el nodo sumidero durante la búsqueda
-    return bfs->visitado[sumidero];
+    return bfs->visitados[sumidero];
 }
 
 
 /**
  * Implementa el algoritmo de Ford-Fulkerson para encontrar el flujo máximo en una red.
- * @param red Puntero a la estructura RedFlujo que representa la red original.
+ * @param red puntero a la estructura red (matriz de adyacencia).
+ * @param bfs puntero a la estructura bfs para almacenar los resultados de la búsqueda en amplitud.
  * @param fuente Nodo fuente para el flujo.
  * @param sumidero Nodo sumidero para el flujo.
  * @return Flujo máximo en la red.
  */
-int fordFulkerson(struct RedFlujo* red, int fuente, int sumidero) {
-    struct RedFlujo redResidual = *red;
+int fordFulkerson(Red *red, BreadthFirstSearch *bfs, int fuente, int sumidero) {
+    Red redResidual = *red;
     int flujoMaximo = 0;
 
-    struct BusquedaAmplitud bfs;
-
-    while (busquedaAmplitud(&redResidual, fuente, sumidero, &bfs)) {
+    while (bfsAlgorithm(&redResidual, bfs, fuente, sumidero)) {
         int flujoCamino = INT_MAX;
 
         // Encuentra la capacidad mínima en el camino de aumento
-        for (int destino = sumidero; destino != fuente; destino = bfs.camino[destino]) {
-            int origen = bfs.camino[destino];
-            flujoCamino = lower(flujoCamino, redResidual.capacidad[origen][destino]);
+        for (int destino = sumidero; destino != fuente; destino = bfs->camino[destino]) {
+            int origen = bfs->camino[destino];
+            flujoCamino = lower(flujoCamino, redResidual.capacidades[origen][destino]);
         }
 
         // Actualiza las capacidades en el grafo residual
-        for (int destino = sumidero; destino != fuente; destino = bfs.camino[destino]) {
-            int origen = bfs.camino[destino];
-            redResidual.capacidad[origen][destino] -= flujoCamino;
-            redResidual.capacidad[destino][origen] += flujoCamino; // Añadir flujo en sentido opuesto
+        for (int destino = sumidero; destino != fuente; destino = bfs->camino[destino]) {
+            int origen = bfs->camino[destino];
+            redResidual.capacidades[origen][destino] -= flujoCamino;
+            redResidual.capacidades[destino][origen] += flujoCamino; // Añadir flujo en sentido opuesto
         }
 
         flujoMaximo += flujoCamino;
@@ -104,12 +123,24 @@ int fordFulkerson(struct RedFlujo* red, int fuente, int sumidero) {
     return flujoMaximo;
 }
 
-void freeRedFlujo(struct RedFlujo* redFlujo) {
+void freeRed(Red *red) {
     for (int i = 0; i < V; i++) {
-        free(redFlujo->capacidad[i]);
+        free(red->capacidades[i]);
     }
-    free(redFlujo->capacidad);
-    redFlujo->capacidad = NULL;  // Importante: establecer el puntero a NULL después de liberar
+    free(red->capacidades);
+    red->capacidades = NULL;
+}
+
+void freeBfs(BreadthFirstSearch *bfs) {
+    free(bfs->visitados);
+    free(bfs->camino);
+    bfs->visitados = NULL;
+    bfs->camino = NULL;
+}
+
+void freeMemory(Red *red, BreadthFirstSearch* bfs) {
+    freeRed(red);
+    freeBfs(bfs);
 }
 
 /**
@@ -117,8 +148,10 @@ void freeRedFlujo(struct RedFlujo* redFlujo) {
  * @return 0 si la ejecución fue exitosa.
  */
 int main(void) {
-    struct RedFlujo redFlujo;
-    inicializarRedFlujoDesdeMatriz(&redFlujo, (int[V][V]){
+    Red red;
+    BreadthFirstSearch bfs;
+
+    inicializarRed(&red, (int[V][V]){
         {0, 4, 6, 0, 0, 0},
         {0, 0, 0, 3, 5, 0},
         {0, 0, 0, 0, 6, 0},
@@ -130,10 +163,9 @@ int main(void) {
     int fuente = 0;
     int sumidero = 5;
 
-    printf("El flujo máximo posible es: %d\n", fordFulkerson(&redFlujo, fuente, sumidero));
+    printf("El flujo máximo posible es: %d\n", fordFulkerson(&red, &bfs, fuente, sumidero));
 
-    // Libera la memoria asignada para la red de flujo
-    freeRedFlujo(&redFlujo);
+    freeMemory(&red, &bfs);
 
     return 0;
 }

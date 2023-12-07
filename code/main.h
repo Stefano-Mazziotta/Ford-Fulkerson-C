@@ -11,18 +11,22 @@
 #define V 6
 #define lower(X, Y) ( (X < Y) ? X : Y )
 
-struct RedFlujo {
-    int **capacidad;
-};
+typedef struct {
+    int **capacidades;
+} Red;
 
-struct BusquedaAmplitud {
-    int *visitado;
+typedef struct {
+    int *visitados;
     int *camino;
-};
+} BreadthFirstSearch;
 
-void inicializarRedFlujoDesdeMatriz(struct RedFlujo* redFlujo, const int matriz[V][V]);
-bool busquedaAmplitud(const struct RedFlujo* red, int fuente, int sumidero, struct BusquedaAmplitud* bfs);
-int fordFulkerson(struct RedFlujo* red, int fuente, int sumidero);
-void freeRedFlujo(struct RedFlujo* redFlujo);
+void inicializarRed( Red *red, const int matriz[V][V]);
+
+bool bfsAlgorithm(const Red *red, BreadthFirstSearch *bfs, int fuente, int sumidero);
+int fordFulkerson(Red *red, BreadthFirstSearch *bfs, int fuente, int sumidero);
+
+void freeRed(Red *red);
+void freeBfs(BreadthFirstSearch *bfs);
+void freeMemory(Red *red, BreadthFirstSearch* bfs);
 
 #endif
