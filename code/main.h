@@ -8,7 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define V 6
+#define V 8
 #define lower(X, Y) ( (X < Y) ? X : Y )
 
 typedef struct {

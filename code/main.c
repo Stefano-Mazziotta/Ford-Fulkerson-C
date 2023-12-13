@@ -105,16 +105,27 @@ int fordFulkerson(Red *red, BreadthFirstSearch *bfs, int fuente, int sumidero) {
         int flujoCamino = INT_MAX;
 
         // Encuentra la capacidad mínima en el camino de aumento
-        for (int destino = sumidero; destino != fuente; destino = bfs->camino[destino]) {
+        int destino = sumidero;
+        while (destino != fuente) {
             int origen = bfs->camino[destino];
-            flujoCamino = lower(flujoCamino, redResidual.capacidades[origen][destino]);
+            int capacidad = redResidual.capacidades[origen][destino];
+            flujoCamino = lower(flujoCamino, capacidad);
+            
+            // Actualizar destino para la próxima iteración
+            destino = bfs->camino[destino];
         }
 
         // Actualiza las capacidades en el grafo residual
-        for (int destino = sumidero; destino != fuente; destino = bfs->camino[destino]) {
+        destino = sumidero;
+        while (destino != fuente) {
             int origen = bfs->camino[destino];
+            
+            // Actualizar capacidades en el grafo residual
             redResidual.capacidades[origen][destino] -= flujoCamino;
             redResidual.capacidades[destino][origen] += flujoCamino; // Añadir flujo en sentido opuesto
+            
+            // Actualizar destino para la próxima iteración
+            destino = bfs->camino[destino];
         }
 
         flujoMaximo += flujoCamino;
@@ -138,6 +149,14 @@ void freeBfs(BreadthFirstSearch *bfs) {
     bfs->camino = NULL;
 }
 
+/**
+ * Libera la memoria dinámica utilizada.
+ * @param red puntero a la estructura red (matriz de adyacencia).
+ * @param bfs puntero a la estructura bfs.
+ * @param fuente Nodo fuente para el flujo.
+ * @param sumidero Nodo sumidero para el flujo.
+ * @return Flujo máximo en la red.
+ */
 void freeMemory(Red *red, BreadthFirstSearch* bfs) {
     freeRed(red);
     freeBfs(bfs);
@@ -151,17 +170,21 @@ int main(void) {
     Red red;
     BreadthFirstSearch bfs;
 
-    inicializarRed(&red, (int[V][V]){
-        {0, 4, 6, 0, 0, 0},
-        {0, 0, 0, 3, 5, 0},
-        {0, 0, 0, 0, 6, 0},
-        {0, 0, 9, 0, 0, 5},
-        {0, 0, 0, 0, 0, 4},
-        {0, 0, 0, 0, 0, 0}
-    });
+    const int matrizAdyacencia[V][V] = {
+        {0, 8, 5, 9, 0, 0, 0, 0},
+        {0, 0, 0, 0, 9, 0, 0, 0},
+        {0, 3, 0, 0, 0, 4, 0, 0},
+        {0, 0, 6, 0, 0, 0, 2, 0},
+        {0, 0, 0, 0, 0, 3, 0, 8},
+        {0, 0, 0, 0, 0, 0, 0, 5},
+        {0, 0, 0, 0, 0, 2, 0, 9},
+        {0, 0, 0, 0, 0, 0, 0, 0}
+    };
+
+    inicializarRed(&red, matrizAdyacencia);
 
     int fuente = 0;
-    int sumidero = 5;
+    int sumidero = 7;
 
     printf("El flujo máximo posible es: %d\n", fordFulkerson(&red, &bfs, fuente, sumidero));
 
